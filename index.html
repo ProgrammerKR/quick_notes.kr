@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Note-Taking App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      text-align:center;
+      align-items:center;
+      justify-content:center;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    
+    .note-form {
+      margin-bottom: 20px;
+    }
+    
+    .note-form input, .note-form textarea {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    
+    .note-form button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .note-form button:hover {
+      background-color: #0056b3;
+    }
+    
+    .notes-list {
+      border-top: 1px solid #ccc;
+      padding-top: 20px;
+    }
+    
+    .note {
+      background-color: #f9f9f9;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .note h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .note p {
+      margin-bottom: 0;
+      color: #666;
+    }
+    
+    .note-actions {
+      display: flex;
+      align-items: center;
+      margin:20px;
+    }
+    
+    .note-actions button {
+      margin-left: 10px;
+      padding: 6px 12px;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .note-actions button.complete {
+      background-color: #28a745;
+      color: white;
+    }
+    
+    .note-actions button.edit {
+      background-color: #007bff;
+      color: white;
+    }
+    
+    .note-actions button.delete {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Note-Taking App</h1>
+    <div class="note-form">
+      <input type="text" id="noteTitle" placeholder="Enter note title...">
+      <textarea id="noteContent" placeholder="Enter note content..."></textarea>
+      <button onclick="saveNote()">Save Note</button>
+    </div>
+    <div class="notes-list" id="notesList">
+      <!-- Notes will be dynamically added here -->
+    </div>
+  </div>
+
+  <script>
+    // Function to load notes from localStorage on page load
+    window.onload = function() {
+      loadNotes();
+    };
+
+    // Function to save a new note
+    function saveNote() {
+      const title = document.getElementById('noteTitle').value;
+      const content = document.getElementById('noteContent').value;
+
+      // Validate if title and content are not empty
+      if (title.trim() === '' || content.trim() === '') {
+        alert('Please enter both title and content for the note.');
+        return;
+      }
+
+      // Create a new note object
+      const newNote = {
+        id: Date.now().toString(), // Unique ID (timestamp)
+        title: title,
+        content: content,
+        completed: false  // Default to not completed
+      };
+
+      // Get existing notes from localStorage or initialize empty array
+      let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+      // Add the new note to the array
+      notes.push(newNote);
+
+      // Save updated notes array to localStorage
+      localStorage.setItem('notes', JSON.stringify(notes));
+
+      // Clear input fields
+      document.getElementById('noteTitle').value = '';
+      document.getElementById('noteContent').value = '';
+
+      // Update the notes list display
+      displayNotes();
+    }
+
+    // Function to display all notes
+    function displayNotes() {
+      const notesList = document.getElementById('notesList');
+      notesList.innerHTML = ''; // Clear previous list
+
+      // Get notes from localStorage
+      let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+      // Iterate through the notes array and create HTML for each note
+      notes.forEach(note => {
+        const noteDiv = document.createElement('div');
+        noteDiv.classList.add('note');
+        noteDiv.innerHTML = `
+          <div>
+            <h2>${note.title}</h2>
+            <p>${note.content}</p>
+          </div>
+        <br><br>
+          <div class="note-actions">
+            <button class="complete" onclick="toggleComplete('${note.id}')">${note.completed ? '✅' : '◻️'}</button>
+            <button class="edit" onclick="editNote('${note.id}')">Edit</button>
+            <button class="delete" onclick="deleteNote('${note.id}')">Delete</button>
+          </div>
+        `;
+        notesList.appendChild(noteDiv);
+      });
+    }
+
+    // Function to delete a note
+    function deleteNote(noteId) {
+      // Get notes from localStorage
+      let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+      // Filter out the note with the given ID
+      notes = notes.filter(note => note.id !== noteId);
+
+      // Save updated notes array to localStorage
+      localStorage.setItem('notes', JSON.stringify(notes));
+
+      // Update the notes list display
+      displayNotes();
+    }
+
+    // Function to edit a note
+    function editNote(noteId) {
+      // Get notes from localStorage
+      let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+      // Find the note with the given ID
+      const noteToEdit = notes.find(note => note.id === noteId);
+
+      // Populate form fields with note data for editing
+      document.getElementById('noteTitle').value = noteToEdit.title;
+      document.getElementById('noteContent').value = noteToEdit.content;
+
+      // Delete the note from localStorage after editing
+      notes = notes.filter(note => note.id !== noteId);
+      localStorage.setItem('notes', JSON.stringify(notes));
+
+      // Update the notes list display
+      displayNotes();
+    }
+
+    // Function to toggle completion of a note
+    function toggleComplete(noteId) {
+      // Get notes from localStorage
+      let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+      // Find the note with the given ID
+      const noteIndex = notes.findIndex(note => note.id === noteId);
+
+      // Toggle the completed status
+      notes[noteIndex].completed = !notes[noteIndex].completed;
+
+      // Save updated notes array to localStorage
+      localStorage.setItem('notes', JSON.stringify(notes));
+
+      // Update the notes list display
+      displayNotes();
+    }
+
+    // Function to load notes from localStorage
+    function loadNotes() {
+      displayNotes();
+    }
+  </script>
+</body>
+</html>
